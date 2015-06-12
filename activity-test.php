@@ -14,7 +14,7 @@ function echo2($some) {
 }
 
 if (!file_exists($authorsFile)) {
-    die("I need you to configure the authors file\n");
+    die(echo2("I need you to configure the authors file\n"));
 }
 $authors = file($authorsFile);
 $authorEmail = array();
@@ -37,7 +37,7 @@ foreach ($authorEmail as $auth) {
 function findCommits($auth, $yearCurrent) {
     $dateRange = '--since=01/01/' . $yearCurrent . ' --until=01/01/' . ($yearCurrent+1);
     $list = array();
-    exec(echo2('git log --diff-filter=M -U0 --author=' . escapeshellcmd($auth) . ' ' . $dateRange . ' --name-only | grep -o \'module\/\(\w\+\)\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq -d'), $list);
+    exec(echo2('git log --diff-filter=M -U0 --author=' . escapeshellcmd($auth) . ' ' . $dateRange . ' --name-only | grep -o \'module\/\w\+\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq -d'), $list);
 
     $moduleActivity = array();
     foreach ($list as $module) {
