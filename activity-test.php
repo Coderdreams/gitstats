@@ -1,9 +1,11 @@
 #!/usr/bin/php5
 <?
 
-$yearStart = "2011";
+$yearStart = "2007";
 $yearEnd = "2016";
-$authorsFile = dirname(__FILE__) . "/nonum.txt";
+$authorsFile = dirname(__FILE__) . "/nonum2.txt";
+// Authors file needs to be in the format: <someaddress@somedomain.com> <anotheraliasfromsameuser@somedomain.com>
+// One line per author
 
 function echo2($some) {
     if (is_array($some)) {
@@ -20,29 +22,40 @@ $authors = file($authorsFile);
 $authorEmail = array();
 
 foreach ($authors as $author) {
-    preg_match("/\<(.+)\>/", $author, $matches);
-    if (!empty($matches[1])) {
-        $authorEmail[] = $matches[1];
+    $found = preg_match_all("/\<(\S+)\>/", $author, $matches);
+    $emails = array();
+    if ($found) {
+        foreach ($matches[0] as $match) {
+            $emails[] = $match;
+        }
     }
+    $authorEmail[] = $emails;
 }
-$authorEmail = array_unique($authorEmail);
+
 foreach ($authorEmail as $auth) {
     $authActivity = array();
     for($currentYear = $yearStart; $currentYear < $yearEnd; $currentYear++) {
         $authActivity[$currentYear] = findCommits($auth, $currentYear);
     }
-    echo $auth . " " . join($authActivity, " ") . "\n";
+    echo $auth[0] . " " . join($authActivity, " ") . "\n";
 }
 
 function findCommits($auth, $yearCurrent) {
     $dateRange = '--since=01/01/' . $yearCurrent . ' --until=01/01/' . ($yearCurrent+1);
     $list = array();
-    exec(echo2('git log --diff-filter=M -U0 --author=' . escapeshellcmd($auth) . ' ' . $dateRange . ' --name-only | grep -o \'module\/\w\+\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq -d'), $list);
+    $authFilter = "";
+    foreach ($auth as $em) {
+        $authFilter .= ' --author=' . escapeshellcmd($em) . " ";
+    }
+    // Use this one to calculate totals
+    //exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'\S\+\(\.php\|\.js\)$\' | sort | uniq -d'), $list);
+    // Use this one to calculate test work
+    exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'module\/\w\+\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq -d'), $list);
 
     $moduleActivity = array();
     foreach ($list as $module) {
         $output = array();
-        exec(echo2('git log --diff-filter=M -U0 --word-diff=plain --word-diff-regex=\'[A-z0-9_]+|[^[:space:]]\' --author=' . escapeshellcmd($auth) . ' ' . $dateRange . ' -p -- ' . $module . " | grep -Eo '(\[-.+\+\}|\[-.+-\]|\{+.*\+\})' | awk '!seen[$0]++' | wc -l"), $output);
+        exec(echo2('git log --diff-filter=AM -U0 --word-diff=plain --word-diff-regex=\'[A-z0-9_]+|[^[:space:]]\'' . $authFilter . ' ' . $dateRange . ' -p -- ' . $module . " | grep -Eo '(\[-.+\+\}|\[-.+-\]|\{+.*\+\})' | awk '!seen[$0]++' | wc -l"), $output);
         $moduleActivity[$module] = $output[0];
     }
 
@@ -52,6 +65,6 @@ function findCommits($auth, $yearCurrent) {
         $sumTotal += $lines;
     }
 
-    echo2("$auth " . $sumTotal . "\n");
+    echo2("$authFilter " . $sumTotal . "\n");
     return $sumTotal;
 }
