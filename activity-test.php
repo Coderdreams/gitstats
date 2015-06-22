@@ -48,9 +48,9 @@ function findCommits($auth, $yearCurrent) {
         $authFilter .= ' --author=' . escapeshellcmd($em) . " ";
     }
     // Use this one to calculate totals
-    //exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'\S\+\(\.php\|\.js\)$\' | sort | uniq -d'), $list);
+    //exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'\S\+\(\.php\|\.js\)$\' | sort | uniq'), $list);
     // Use this one to calculate test work
-    exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'module\/\w\+\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq -d'), $list);
+    exec(echo2('git log --diff-filter=AM -U0 ' . $authFilter . ' ' . $dateRange . ' --name-only | grep -o \'module\/\w\+\/\(UITEST\|START\|HELPER\|\S\+unit\.php\|\S\+unit\.js\)\' | sort | uniq'), $list);
 
     $moduleActivity = array();
     foreach ($list as $module) {
